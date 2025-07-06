@@ -1,0 +1,17 @@
+{
+  "name": "ollama-gemini-proxy",
+  "version": "1.0.0",
+  "description": "Proxy for Ollama to Gemini CLI",
+  "main": "ollama-gemini-proxy.js",
+  "scripts": {
+    "start": "node ollama-gemini-proxy.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.19.2",
+    "google-auth-library": "^9.10.0"
+  }
+}
