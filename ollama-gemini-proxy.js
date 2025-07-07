@@ -64,7 +64,8 @@ console.debug("[DEBUG] Loaded configuration constants.", {
 // Gemini CLI-compatible model definitions
 const geminiCliModels = {
     "gemini-2.5-pro": { maxTokens: 65536, contextWindow: 1_048_576 },
-    "gemini-2.5-flash": { maxTokens: 65536, contextWindow: 1_048_576 }
+    "gemini-2.5-flash": { maxTokens: 65536, contextWindow: 1_048_576 },
+    "gemini-2.5-flash-non-reasoning": { maxTokens: 65536, contextWindow: 1_048_576 }
 };
 console.debug("[DEBUG] Configured Gemini CLI models:", geminiCliModels);
 
@@ -197,7 +198,7 @@ class GeminiCliHandler {
     /**
      * Sends chat messages to Gemini and returns an async iterator of the response stream.
      */
-    async createMessage(messages, modelId) {
+    async createMessage(messages, modelId, temperature = undefined) {
         const projectId = await this.discoverProjectId();
         const modelInfo = geminiCliModels[modelId] || geminiCliModels["gemini-2.5-flash"];
 
@@ -233,9 +234,14 @@ class GeminiCliHandler {
         }
 
         const streamRequest = {
-            model: modelId, project: projectId, request: {
-                contents, generationConfig: {
-                    temperature: 0.7, maxOutputTokens: modelInfo.maxTokens || 8192,
+            model: modelId === "gemini-2.5-flash-non-reasoning" ? "gemini-2.5-flash" : modelId,
+            project: projectId,
+            request: {
+                contents,
+                generationConfig: {
+                    maxOutputTokens: modelInfo.maxTokens || 8192,
+                    ...(temperature !== undefined && { temperature: temperature }),
+                    ...(modelId === "gemini-2.5-flash-non-reasoning" && { thinkingConfig: { thinkingBudget: 0 } })
                 },
             },
         };
@@ -269,16 +275,18 @@ const handler = new GeminiCliHandler();
  * Supports both streaming and non-streaming responses.
  */
 const processOllamaChat = async (req, res) => {
-    const { model, messages, stream = true } = req.body;
+    const { model, messages, stream = true, options } = req.body;
     const modelId = model.replace(":latest", "");
 
     if (!model || !messages) {
         return res.status(400).json({ error: "Fields 'model' and 'messages' are required." });
     }
 
+    const temperature = options?.temperature;
+
     try {
         const createdAt = new Date().toISOString();
-        const geminiStream = await handler.createMessage(messages, modelId);
+        const geminiStream = await handler.createMessage(messages, modelId, temperature);
 
         if (!stream) {
             let fullResponse = "";
