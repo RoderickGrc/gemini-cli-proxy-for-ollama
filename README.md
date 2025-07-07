@@ -32,7 +32,7 @@ This project provides a local proxy compatible with Ollama and OpenAI API client
 ## Installation
 
 ```sh
-git clone https://github.com/your-user/ollama-gemini-proxy.git
+git clone https://github.com/RoderickGrc/gemini-cli-proxy-for-ollama/
 cd ollama-gemini-proxy
 npm install
 ````
